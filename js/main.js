@@ -17,6 +17,7 @@ function preload(){
      game.load.audio('sfx:coin', 'audio/coin.wav');
      game.load.spritesheet('spider', 'images/spider.png', 42, 32);
      game.load.image('invisible-wall', 'images/invisible_wall.png');
+     game.load.audio('sfx:stomp', 'audio/stomp.wav');
 };
 
 
@@ -28,6 +29,7 @@ function create(){
         sfxJump = game.add.audio('sfx:jump');
         upKey = game.input.keyboard.addKey(Phaser.Keyboard.UP); 
         sfxCoin = game.add.audio('sfx:coin');
+        sfxStomp = game.add.audio('sfx:stomp');
     upKey.onDown.add(function(){
 jump();
         });
@@ -36,6 +38,7 @@ jump();
 function update(){
     handleCollisions();
     handleInput();
+    moveSpider();
 };
 
 //Create a game state
@@ -44,7 +47,7 @@ var game = new Phaser.Game(960, 600, Phaser.AUTO, 'game', {init: init, preload: 
 function loadLevel(data) {
     platforms = game.add.group();
     coins = game.add.group();
-        enemyWalls = game.add.group();
+    enemyWalls = game.add.group();
     spiders = game.add.group();
     data.platforms.forEach(spawnPlatform, this);
     data.coins.forEach(spawnCoin, this);
@@ -52,8 +55,7 @@ function loadLevel(data) {
 
       }); 
     game.physics.arcade.gravity.y = 1200;
-
-
+    enemyWalls.visible = false;
 
 };
 function spawnPlatform(platform) {
@@ -108,6 +110,7 @@ function handleCollisions(){
     game.physics.arcade.overlap(hero, coins, onHeroVsCoin, null);
     game.physics.arcade.collide(spiders, platforms);
     game.physics.arcade.collide(spiders, enemyWalls);
+    game.physics.arcade.overlap(hero, spiders, onHeroVsEnemy, null);
 
 };
 function jump(){
@@ -138,4 +141,28 @@ function spawnEnemyWall(x, y, side){
     sprite.body.immovable = true;
     sprite.body.allowGravity = false;
 }
-// Need to make enemyWalls invisible using boolean
+function moveSpider(){
+    spiders.forEach(function (spider){
+        if (spider.body.touching.right || spider.body.blocked.right) {
+            spider.body.velocity.x = -100;
+        }
+        else if (spider.body.touching.left || spider.body.blocked.left) {
+            spider.body.velocity.x = 100;
+        }
+    })
+}
+function onHeroVsEnemy(hero, enemy){
+    if (hero.body.velocity.y > 0) {
+        hero.body.velocity.y = -200;
+        die(enemy);
+        sfxStomp.play();
+    }
+    
+    else {
+        sfxStomp.play();
+        game.state.restart();
+    }
+}
+  data.spiders.forEach(function (spider){
+        sprite.animations.add('die', [0, 4, 0, 4, 0, 4, 3, 3, 3, 3, 3, 3], 12);
+    })
